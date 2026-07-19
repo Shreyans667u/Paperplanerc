@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0B1B2B" />
+<title>Paper Plane Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-deep:#0B1B2B;
+    --sky-mid:#16324F;
+    --paper:#F4EDE0;
+    --amber:#E8A33D;
+    --amber-dim:#8a6a34;
+    --warn:#D65A4A;
+    --ink:#0B1B2B;
+    --mist:#9FB4C7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:radial-gradient(circle at 50% -10%, var(--sky-mid), var(--sky-deep) 70%);
+    color:var(--paper);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  header.top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:6px 2px 22px;
+    border-bottom:1px solid rgba(159,180,199,0.18);
+    margin-bottom:22px;
+  }
+  header.top .brand{font-size:19px; font-weight:700; letter-spacing:0.01em;}
+  header.top .brand span{color:var(--amber);}
+  header.top .tag{font-size:11px; color:var(--mist); text-transform:uppercase; letter-spacing:0.12em;}
+
+  /* ---------- Lobby ---------- */
+  .card{
+    background:rgba(244,237,224,0.04);
+    border:1px solid rgba(159,180,199,0.16);
+    border-radius:14px;
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:0.14em;
+    color:var(--amber); font-weight:600;
+  }
+  .card p.hint{margin:0 0 14px; font-size:12.5px; color:var(--mist);}
+  input[type=text]{
+    width:100%; padding:12px 13px; border-radius:9px; border:1px solid rgba(159,180,199,0.3);
+    background:rgba(11,27,43,0.5); color:var(--paper); font-family:'IBM Plex Mono',monospace;
+    font-size:15px; letter-spacing:0.04em; outline:none;
+  }
+  input[type=text]:focus{border-color:var(--amber);}
+  input[type=text]::placeholder{color:var(--mist); opacity:0.6;}
+  .row{display:flex; gap:10px; margin-top:10px;}
+  .row > *{flex:1;}
+
+  button{
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;
+    border:none; border-radius:9px; padding:12px 14px; cursor:pointer;
+    transition:transform .08s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(0.97);}
+  button.primary{background:var(--amber); color:var(--ink);}
+  button.ghost{background:transparent; color:var(--paper); border:1px solid rgba(159,180,199,0.35);}
+  button.block{width:100%; margin-top:12px;}
+  button:disabled{opacity:0.4; cursor:not-allowed;}
+
+  .toggle{display:flex; border:1px solid rgba(159,180,199,0.3); border-radius:9px; overflow:hidden; margin-bottom:12px;}
+  .toggle button{flex:1; border-radius:0; background:transparent; color:var(--mist);}
+  .toggle button.active{background:var(--amber); color:var(--ink);}
+
+  .public-room{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:11px 4px; border-bottom:1px solid rgba(159,180,199,0.1); font-size:13.5px;
+  }
+  .public-room:last-child{border-bottom:none;}
+  .public-room .meta{color:var(--mist); font-size:11.5px;}
+  .empty{color:var(--mist); font-size:12.5px; padding:6px 2px;}
+
+  /* ---------- Discord banner ---------- */
+  .discord-banner{
+    display:flex; align-items:center; gap:10px;
+    background:rgba(88,101,242,0.12); border:1px solid rgba(88,101,242,0.35);
+    border-radius:10px; padding:11px 13px; margin-bottom:16px; font-size:12.5px; color:#c7cbfa;
+  }
+  .discord-banner svg{flex-shrink:0;}
+
+  /* ---------- Room / Game ---------- */
+  .roomcode-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .roomcode-bar .code{font-family:'IBM Plex Mono',monospace; font-size:22px; letter-spacing:0.12em; font-weight:600;}
+  .roomcode-bar .badge{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; padding:4px 8px;
+    border-radius:5px; border:1px solid rgba(159,180,199,0.3); color:var(--mist);
+  }
+  .badge.public{border-color:rgba(232,163,61,0.5); color:var(--amber);}
+  .badge.solo{border-color:rgba(89,201,122,0.5); color:#59c97a;}
+  #screen-room.mode-solo .timer{display:none;}
+
+  .players{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;}
+  .pill{
+    font-size:11.5px; padding:5px 10px; border-radius:99px;
+    background:rgba(159,180,199,0.1); color:var(--mist);
+  }
+  .pill.you{background:rgba(232,163,61,0.18); color:var(--amber);}
+
+  /* Instrument dial */
+  .instrument{
+    position:relative; width:230px; height:230px; margin:6px auto 20px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #1c3a58, #0B1B2B 75%);
+    border:1px solid rgba(159,180,199,0.25);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .instrument .ring{
+    position:absolute; inset:10px; border-radius:50%; border:1px dashed rgba(159,180,199,0.2);
+  }
+  .instrument .needle{
+    position:absolute; width:3px; height:78px; background:var(--amber);
+    top:50%; left:50%; transform-origin:50% 100%;
+    transform:translate(-50%,-100%) rotate(0deg);
+    border-radius:3px; box-shadow:0 0 10px rgba(232,163,61,0.6);
+    transition:transform .5s cubic-bezier(.2,.9,.3,1);
+  }
+  .instrument .hub{
+    position:absolute; width:13px; height:13px; border-radius:50%; background:var(--paper);
+    box-shadow:0 0 8px rgba(244,237,224,0.5); z-index:2;
+  }
+  .instrument .readout{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--mist); text-align:center; z-index:1;
+  }
+  .instrument .readout .cmd{display:block; font-size:16px; color:var(--paper); font-weight:600; letter-spacing:0.06em; margin-top:2px;}
+  .instrument .timer{
+    position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber);
+  }
+
+  .pad{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px;
+  }
+  .pad button{
+    height:64px; background:rgba(244,237,224,0.05); color:var(--paper);
+    border:1px solid rgba(159,180,199,0.25); font-size:13px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:3px;
+  }
+  .pad button .n{font-size:16px;}
+  .pad button.voted{background:var(--amber); color:var(--ink); border-color:var(--amber);}
+  .pad button.spacer{visibility:hidden;}
+
+  .vote-status{
+    text-align:center; font-size:12px; color:var(--mist); margin-bottom:6px; font-family:'IBM Plex Mono',monospace;
+  }
+  .vote-status.locked{color:var(--amber);}
+
+  .plane-status{
+    display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--mist);
+    justify-content:center; margin-top:6px;
+  }
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--warn);}
+  .dot.on{background:#59c97a; box-shadow:0 0 6px #59c97a;}
+
+  .footer-leave{margin-top:auto; padding-top:16px;}
+  .error-toast{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%);
+    background:var(--warn); color:#fff; padding:10px 16px; border-radius:8px; font-size:12.5px;
+    z-index:50; opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .error-toast.show{opacity:1;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="error-toast" id="toast"></div>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">Paper Plane <span>Party</span></div>
+    <div class="tag">Flight Deck</div>
+  </header>
+
+  <!-- ===================== LOBBY ===================== -->
+  <div id="screen-lobby">
+    <div class="discord-banner">
+      <svg width="18" height="14" viewBox="0 0 24 18" fill="#8b93f7"><path d="M20.3 1.7A19.8 19.8 0 0015.4.3c-.2.4-.5 1-.7 1.4a18.3 18.3 0 00-5.4 0c-.2-.5-.4-1-.7-1.4A19.7 19.7 0 003.7 1.7C.9 6 .1 10.2.5 14.3a20 20 0 006 3c.5-.7.9-1.4 1.3-2.2-.7-.3-1.4-.6-2-1l.5-.4c3.9 1.8 8.1 1.8 12 0l.4.4c-.6.4-1.3.7-2 1 .4.8.8 1.5 1.3 2.2a20 20 0 006-3c.5-4.7-.7-8.9-3.2-12.6zM8.5 11.8c-1.1 0-2-1-2-2.3 0-1.2.9-2.3 2-2.3s2 1 2 2.3-.9 2.3-2 2.3zm7 0c-1.1 0-2-1-2-2.3 0-1.2.9-2.3 2-2.3s2 1 2 2.3-.9 2.3-2 2.3z"/></svg>
+      <span>Voice is handled off-app — hop on the room's Discord call to talk strategy while you vote.</span>
+    </div>
+
+    <div class="card">
+      <h2>Fly with friends</h2>
+      <p class="hint">Enter a callsign, then create or join a room. 1–5 pilots per room — fly solo to test, or bring the squad.</p>
+      <input type="text" id="playerName" placeholder="Callsign (your name)" maxlength="20" />
+    </div>
+
+    <div class="card">
+      <h2>Flight mode</h2>
+      <div class="toggle">
+        <button id="tabSquad" class="active">Squad Vote</button>
+        <button id="tabSolo">Solo Flight</button>
+      </div>
+      <p class="hint" id="modeHint">Up to 5 pilots vote each round — majority command wins.</p>
+    </div>
+
+    <div class="card">
+      <h2>Create a room</h2>
+      <div class="toggle">
+        <button id="tabPublic" class="active">Public</button>
+        <button id="tabPrivate">Private</button>
+      </div>
+      <input type="text" id="roomName" placeholder="Room name (optional)" maxlength="24" />
+      <button class="primary block" id="btnCreate">Create room</button>
+    </div>
+
+    <div class="card">
+      <h2>Join a private room</h2>
+      <input type="text" id="joinCode" placeholder="4-letter room code" maxlength="4" style="text-transform:uppercase" />
+      <button class="ghost block" id="btnJoin">Join with code</button>
+    </div>
+
+    <div class="card">
+      <h2>Public rooms</h2>
+      <div id="publicList"><div class="empty">Searching…</div></div>
+      <button class="ghost block" id="btnRefresh">Refresh list</button>
+    </div>
+  </div>
+
+  <!-- ===================== ROOM ===================== -->
+  <div id="screen-room" class="hidden">
+    <div class="roomcode-bar">
+      <div>
+        <div class="code mono" id="roomCodeDisplay">----</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <div class="badge" id="modeBadge">SQUAD</div>
+        <div class="badge" id="visibilityBadge">PUBLIC</div>
+      </div>
+    </div>
+
+    <div class="players" id="playersList"></div>
+
+    <div class="instrument">
+      <div class="ring"></div>
+      <div class="needle" id="needle"></div>
+      <div class="hub"></div>
+      <div class="readout">
+        LAST COMMAND
+        <span class="cmd" id="lastCommand">—</span>
+      </div>
+      <div class="timer mono" id="roundTimer">2.0s</div>
+    </div>
+
+    <div class="vote-status mono" id="voteStatus">Cast your vote for this round</div>
+
+    <div class="pad">
+      <button class="spacer"></button>
+      <button data-cmd="up"><span class="n">▲</span>UP</button>
+      <button class="spacer"></button>
+
+      <button data-cmd="left"><span class="n">◀</span>LEFT</button>
+      <button data-cmd="throttle_up"><span class="n">＋</span>THR+</button>
+      <button data-cmd="right"><span class="n">▶</span>RIGHT</button>
+
+      <button class="spacer"></button>
+      <button data-cmd="down"><span class="n">▼</span>DOWN</button>
+      <button data-cmd="throttle_down"><span class="n">－</span>THR-</button>
+    </div>
+
+    <div class="plane-status">
+      <div class="dot" id="planeDot"></div>
+      <span id="planeStatusText">Plane not connected</span>
+    </div>
+
+    <div class="footer-leave">
+      <button class="ghost block" id="btnLeave">Leave room</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}`);
+
+  const $ = (id) => document.getElementById(id);
+  const lobby = $("screen-lobby");
+  const roomScreen = $("screen-room");
+  const toast = $("toast");
+
+  let myVisibility = "public";
+  let myMode = "squad";
+  let myName = "";
+  let myId = null;
+  let currentMode = "squad";
+  let hasVotedThisRound = false;
+  let roundEndAt = 0;
+  let timerInterval = null;
+
+  const MODE_HINTS = {
+    squad: "Up to 5 pilots vote each round — majority command wins.",
+    solo: "Just you — tap a command and it flies instantly, no waiting.",
+  };
+
+  const ANGLE_MAP = {
+    up: -90, down: 90, left: -180, right: 0,
+    throttle_up: -45, throttle_down: 45,
+  };
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2400);
+  }
+
+  function send(obj) {
+    if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+  }
+
+  // ---------- Lobby wiring ----------
+  $("tabPublic").onclick = () => { myVisibility = "public"; $("tabPublic").classList.add("active"); $("tabPrivate").classList.remove("active"); };
+  $("tabPrivate").onclick = () => { myVisibility = "private"; $("tabPrivate").classList.add("active"); $("tabPublic").classList.remove("active"); };
+
+  $("tabSquad").onclick = () => { myMode = "squad"; $("tabSquad").classList.add("active"); $("tabSolo").classList.remove("active"); $("modeHint").textContent = MODE_HINTS.squad; };
+  $("tabSolo").onclick = () => { myMode = "solo"; $("tabSolo").classList.add("active"); $("tabSquad").classList.remove("active"); $("modeHint").textContent = MODE_HINTS.solo; };
+
+  $("btnCreate").onclick = () => {
+    myName = $("playerName").value.trim();
+    send({ type: "create_room", visibility: myVisibility, mode: myMode, name: $("roomName").value.trim(), playerName: myName });
+  };
+
+  $("btnJoin").onclick = () => {
+    myName = $("playerName").value.trim();
+    const code = $("joinCode").value.trim().toUpperCase();
+    if (!code) { showToast("Enter a room code first."); return; }
+    send({ type: "join_room", code, playerName: myName });
+  };
+
+  $("btnRefresh").onclick = refreshPublicRooms;
+  function refreshPublicRooms() { send({ type: "list_public" }); }
+
+  $("btnLeave").onclick = () => {
+    send({ type: "leave" });
+    roomScreen.classList.add("hidden");
+    roomScreen.classList.remove("mode-solo");
+    clearInterval(timerInterval);
+    hasVotedThisRound = false;
+    myId = null;
+    lobby.classList.remove("hidden");
+    refreshPublicRooms();
+  };
+
+  document.querySelectorAll(".pad button[data-cmd]").forEach((btn) => {
+    btn.onclick = () => {
+      if (currentMode === "squad" && hasVotedThisRound) return;
+      send({ type: "vote", command: btn.dataset.cmd });
+      if (currentMode === "solo") {
+        document.querySelectorAll(".pad button[data-cmd]").forEach(b => b.classList.remove("voted"));
+        btn.classList.add("voted");
+        setTimeout(() => btn.classList.remove("voted"), 220);
+      }
+    };
+  });
+
+  // ---------- Socket events ----------
+  ws.onopen = refreshPublicRooms;
+
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+
+    switch (msg.type) {
+      case "public_rooms": {
+        const list = $("publicList");
+        if (!msg.rooms.length) { list.innerHTML = '<div class="empty">No public rooms open right now — start one!</div>'; return; }
+        list.innerHTML = msg.rooms.map(r => `
+          <div class="public-room">
+            <div>
+              <div>${escapeHtml(r.name)} <span style="color:var(--mist); font-size:11px;">· ${r.mode === "solo" ? "Solo" : "Squad"}</span></div>
+              <div class="meta">${r.playerCount}/${r.maxPlayers} pilots · ${r.planeConnected ? "plane linked" : "no plane yet"}</div>
+            </div>
+            <button class="ghost" data-join="${r.code}">Join</button>
+          </div>
+        `).join("");
+        list.querySelectorAll("[data-join]").forEach(b => {
+          b.onclick = () => {
+            myName = $("playerName").value.trim();
+            send({ type: "join_room", code: b.dataset.join, playerName: myName });
+          };
+        });
+        break;
+      }
+
+      case "joined_room": {
+        lobby.classList.add("hidden");
+        roomScreen.classList.remove("hidden");
+        $("roomCodeDisplay").textContent = msg.code;
+        $("visibilityBadge").textContent = msg.visibility.toUpperCase();
+        $("visibilityBadge").className = "badge " + msg.visibility;
+        currentMode = msg.mode;
+        myId = msg.you;
+        $("modeBadge").textContent = msg.mode === "solo" ? "SOLO" : "SQUAD";
+        $("modeBadge").className = "badge " + (msg.mode === "solo" ? "solo" : "");
+        roomScreen.classList.toggle("mode-solo", msg.mode === "solo");
+        if (msg.mode === "solo") {
+          $("voteStatus").textContent = "Direct control — tap any command, it flies instantly";
+          $("voteStatus").classList.remove("locked");
+        }
+        break;
+      }
+
+      case "room_state": {
+        $("playersList").innerHTML = msg.players.map(p =>
+          `<div class="pill ${p.id === myId ? "you" : ""}">${escapeHtml(p.name)}</div>`
+        ).join("") || '<div class="empty">Waiting for pilots…</div>';
+        $("planeDot").classList.toggle("on", msg.planeConnected);
+        $("planeStatusText").textContent = msg.planeConnected ? "Plane connected & armed" : "Plane not connected";
+        if (msg.lastCommand) $("lastCommand").textContent = msg.lastCommand.replace("_", " ").toUpperCase();
+        break;
+      }
+
+      case "round_start": {
+        if (currentMode !== "squad") break; // solo mode has no rounds
+        hasVotedThisRound = false;
+        roundEndAt = msg.deadline;
+        $("voteStatus").textContent = "Cast your vote for this round";
+        $("voteStatus").classList.remove("locked");
+        document.querySelectorAll(".pad button[data-cmd]").forEach(b => { b.classList.remove("voted"); b.disabled = false; });
+        startTimer(msg.roundMs);
+        break;
+      }
+
+      case "vote_locked": {
+        if (currentMode !== "squad") break;
+        hasVotedThisRound = true;
+        $("voteStatus").textContent = `Locked in: ${msg.command.replace("_"," ").toUpperCase()}`;
+        $("voteStatus").classList.add("locked");
+        document.querySelectorAll(".pad button[data-cmd]").forEach(b => {
+          b.disabled = true;
+          if (b.dataset.cmd === msg.command) b.classList.add("voted");
+        });
+        break;
+      }
+
+      case "vote_rejected": {
+        if (msg.reason === "cooldown") break; // solo mode: silently ignore, servo just isn't ready yet
+        showToast("You already voted this round — one command at a time.");
+        break;
+      }
+
+      case "vote_progress": {
+        if (currentMode !== "squad") break;
+        $("voteStatus").textContent = hasVotedThisRound
+          ? `Locked in — ${msg.votesIn}/${msg.playerCount} pilots voted`
+          : `${msg.votesIn}/${msg.playerCount} pilots voted`;
+        break;
+      }
+
+      case "round_result": {
+        const cmdText = msg.winner ? msg.winner.replace("_", " ").toUpperCase() : "NO CONSENSUS";
+        $("lastCommand").textContent = cmdText;
+        if (msg.winner && ANGLE_MAP[msg.winner] !== undefined) {
+          $("needle").style.transform = `translate(-50%,-100%) rotate(${ANGLE_MAP[msg.winner]}deg)`;
+        }
+        break;
+      }
+
+      case "error": {
+        showToast(msg.message);
+        break;
+      }
+    }
+  };
+
+  ws.onclose = () => showToast("Disconnected from server.");
+
+  function startTimer(roundMs) {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const remaining = Math.max(0, roundEndAt - Date.now());
+      $("roundTimer").textContent = (remaining / 1000).toFixed(1) + "s";
+    }, 100);
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+})();
+</script>
+</body>
+</html>
